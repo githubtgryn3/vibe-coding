@@ -164,6 +164,146 @@
     </div>
   </footer>
 
-  <script src="js/script.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var navToggle = document.getElementById("navToggle");
+      var nav = document.getElementById("nav");
+
+      navToggle.addEventListener("click", function () {
+        var open = nav.classList.toggle("open");
+        navToggle.classList.toggle("active", open);
+        navToggle.setAttribute("aria-expanded", String(open));
+      });
+
+      nav.querySelectorAll("a").forEach(function (link) {
+        link.addEventListener("click", function () {
+          nav.classList.remove("open");
+          navToggle.classList.remove("active");
+          navToggle.setAttribute("aria-expanded", "false");
+        });
+      });
+
+      var reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      var revealables = Array.prototype.slice.call(document.querySelectorAll("[data-reveal]"));
+      var counters = Array.prototype.slice.call(document.querySelectorAll("[data-count]"));
+      var counterStarted = new Set();
+
+      function runCounter(el) {
+        if (counterStarted.has(el)) return;
+        counterStarted.add(el);
+        var target = parseInt(el.getAttribute("data-count"), 10);
+        var duration = 1200;
+        var start = null;
+
+        function step(ts) {
+          if (!start) start = ts;
+          var progress = Math.min((ts - start) / duration, 1);
+          el.textContent = Math.floor(progress * target);
+          if (progress < 1) requestAnimationFrame(step);
+          else el.textContent = target;
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      function isInView(el) {
+        return el.getBoundingClientRect().top < window.innerHeight * 0.92;
+      }
+
+      function check() {
+        revealables.forEach(function (el) {
+          if (!el.classList.contains("revealed") && isInView(el)) {
+            el.classList.add("revealed");
+            el.classList.remove("hidden-init");
+          }
+        });
+        counters.forEach(function (el) {
+          if (isInView(el)) runCounter(el);
+        });
+      }
+
+      if (!reducedMotion) {
+        revealables.forEach(function (el) {
+          el.classList.add("hidden-init");
+        });
+      }
+
+      var ticking = false;
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          check();
+          ticking = false;
+        });
+      }
+
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", check);
+      check();
+
+      setTimeout(function () {
+        revealables.forEach(function (el) {
+          if (!el.classList.contains("revealed")) {
+            el.classList.add("revealed");
+            el.classList.remove("hidden-init");
+          }
+        });
+        counters.forEach(runCounter);
+      }, 4000);
+
+      var WHATSAPP_NUMBER = "6285924146032";
+      var form = document.getElementById("contactForm");
+      var status = document.getElementById("formStatus");
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var nama = document.getElementById("nama").value.trim();
+        var email = document.getElementById("email").value.trim();
+        var pesan = document.getElementById("pesan").value.trim();
+        var emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+        if (!nama) {
+          status.textContent = "Mohon isi nama lengkap Anda.";
+          status.className = "form-status error";
+          return;
+        }
+        if (!emailValid) {
+          status.textContent = "Mohon isi email yang valid.";
+          status.className = "form-status error";
+          return;
+        }
+
+        var lines = [
+          "Assalamu'alaikum Warahmatullahi Wabarakatuh,",
+          "",
+          "Saya *" + nama + "* ingin mendaftarkan diri sebagai calon santri di Rumah Tahfidz Insan Qur'ani.",
+          "",
+          "*Data Pendaftaran:*",
+          "Nama Lengkap: " + nama,
+          "Email: " + email
+        ];
+
+        if (pesan) {
+          lines.push("Pesan: " + pesan);
+        }
+
+        lines.push(
+          "",
+          "Mohon informasi lebih lanjut terkait pendaftarannya.",
+          "Terima kasih.",
+          "Jazakumullahu khairan."
+        );
+
+        var url = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(lines.join("\n"));
+        window.open(url, "_blank", "noopener");
+
+        status.textContent = "Membuka WhatsApp untuk mengirim pendaftaran...";
+        status.className = "form-status success";
+        form.reset();
+      });
+    });
+  </script>
 </body>
 </html>
